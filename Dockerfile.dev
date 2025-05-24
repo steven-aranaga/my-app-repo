@@ -1,78 +1,65 @@
-FROM debian:bookworm-slim
+FROM ubuntu:22.04
 
 # Set environment variables
-ENV DEBIAN_FRONTEND=noninteractive \
-    PYTHONUNBUFFERED=1 \
-    RUSTUP_HOME=/usr/local/rustup \
-    CARGO_HOME=/usr/local/cargo \
-    PATH=/usr/local/cargo/bin:$PATH
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV RUST_BACKTRACE=1
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Basic development tools
+# Install dependencies
+RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
     git \
-    wget \
-    ca-certificates \
-    # Python dependencies
+    libssl-dev \
+    pkg-config \
     python3 \
+    python3-dev \
     python3-pip \
     python3-venv \
-    # Rust dependencies
-    pkg-config \
-    libssl-dev \
-    # SQLite for database
     sqlite3 \
-    # Node.js for frontend
-    nodejs \
-    npm \
-    # Zola static site generator
-    # zola \
-    # Development tools
-    vim \
-    less \
-    # Docker dependencies
-    apt-transport-https \
-    ca-certificates \
-    gnupg \
-    lsb-release \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Docker
-RUN mkdir -p /etc/apt/keyrings \
-    && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian bookworm stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends docker-ce docker-ce-cli containerd.io docker-compose-plugin \
+    supervisor \
+    nginx \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Rust
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
-    && rustup default stable \
-    && rustup component add rustfmt clippy
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
 
-# Install Python packages
-# RUN pip install --no-cache-dir \
-#     pip-audit \
-#     black \
-#     flake8 \
-#     mypy \
-#     pytest
+# Create app directory
+WORKDIR /app
 
-# Create workspace directory
-WORKDIR /workspace
+# Copy application files
+COPY . /app/
 
-# Set up entrypoint
-COPY scripts/setup-dev.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/setup-dev.sh
+# Create directories
+RUN mkdir -p /app/data /app/logs /app/static/css /app/static/js /app/static/html
 
-# Create non-root user and add to docker group
-RUN useradd -m -s /bin/bash developer \
-    && usermod -aG docker developer \
-    && chown -R developer:developer /workspace
+# Create static files
+RUN echo "body { font-family: Arial, sans-serif; margin: 0; padding: 0; }" > /app/static/css/styles.css
+RUN echo "console.log('My App loaded');" > /app/static/js/main.js
+RUN echo "<h1>404 - Page Not Found</h1>" > /app/static/html/404.html
+RUN echo "<h1>500 - Server Error</h1>" > /app/static/html/50x.html
 
-USER developer
+# Set up Python environment
+RUN python3 -m venv /app/venv
+ENV PATH="/app/venv/bin:${PATH}"
+RUN pip install --upgrade pip
+RUN pip install -r /app/backend/requirements.txt
 
-# Set default command
-CMD ["/bin/bash"] 
+# Build Rust applications
+RUN cd /app/api && cargo build --release
+RUN cd /app/web && cargo build --release
+
+# Configure Nginx
+RUN rm /etc/nginx/sites-enabled/default
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
+
+# Configure Supervisor
+COPY supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Expose ports
+EXPOSE 80
+
+# Start services
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+

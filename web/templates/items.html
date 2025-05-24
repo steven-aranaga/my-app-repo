@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="items">
+    <h1>Items</h1>
+    
+    {% if page_data.items.len() > 0 %}
+        <div class="items-grid">
+            {% for item in page_data.items %}
+            <div class="item-card">
+                <h2>{{ item.name }}</h2>
+                <p>{{ item.description }}</p>
+                <div class="item-meta">
+                    <span>ID: {{ item.id }}</span>
+                    <span>User ID: {{ item.user_id }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No items found.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
