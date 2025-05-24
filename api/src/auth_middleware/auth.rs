@@ -1,12 +1,11 @@
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-    Error, HttpMessage, HttpResponse,
+    Error, HttpResponse,
 };
 use futures::future::{ok, Ready};
 use log::error;
-use std::future::{ready, Future, Ready as StdReady};
+use std::future::{ready, Future};
 use std::pin::Pin;
-use std::task::{Context, Poll};
 
 use crate::config::get_config;
 
@@ -79,14 +78,13 @@ where
         
         // Token is invalid, return unauthorized
         error!("Unauthorized request: Invalid or missing API token");
-        Box::pin(ready(Ok(req.into_response(
-            HttpResponse::Unauthorized()
-                .json(serde_json::json!({
-                    "error": "Unauthorized",
-                    "message": "Invalid or missing API token"
-                }))
-                .into_body(),
-        ))))
+        let (req, _) = req.into_parts();
+        let res = HttpResponse::Unauthorized()
+            .json(serde_json::json!({
+                "error": "Unauthorized",
+                "message": "Invalid or missing API token"
+            }));
+        Box::pin(ready(Ok(ServiceResponse::<B>::new(req, res))))
     }
 }
 

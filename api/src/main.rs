@@ -5,7 +5,7 @@ use log::{info, error};
 
 mod config;
 mod handlers;
-mod middleware;
+mod auth_middleware;
 mod models;
 mod utils;
 
@@ -40,7 +40,7 @@ async fn main() -> std::io::Result<()> {
             // Enable CORS
             .wrap(cors)
             // Enable authentication middleware
-            .wrap(middleware::auth::Authentication)
+            .wrap(auth_middleware::Authentication)
             
             // API routes
             .service(
