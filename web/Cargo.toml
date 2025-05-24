@@ -1,0 +1,27 @@
+[package]
+name = "my-app-web"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web
+actix-cors
+actix-files
+askama
+askama_actix
+chrono = { features = ["serde"] }
+dotenv
+env_logger
+hex
+log
+rand
+reqwest = { features = ["json"] }
+serde = { features = ["derive"] }
+serde_json
+tokio = { features = ["full"] }
+futures
+futures-util
+thiserror
+
+[package.metadata.askama]
+template-dir = "templates" # Corrected path relative to Cargo.toml

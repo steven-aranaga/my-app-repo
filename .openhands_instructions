@@ -1,0 +1,8 @@
+This is a repo for my-app, an application consisting of a python backend served by an API to a rust frontend.
+
+ASSUMPTION: Working directory is /workspacemy-app-repo
+
+- Documentation: read README.md for application information
+- Coding: Check CONVENTIONS.md for instructions
+- Setup: Run `.openhands/setup.sh` and allow to execute
+- Execution: To run the system, execute `./scripts/start-dev.sh`

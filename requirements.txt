@@ -1,0 +1,51 @@
+# Core dependencies
+requests
+python-dotenv
+
+# Error handling and retries
+tenacity
+
+# Type checking and validation
+typing-extensions
+
+# HTTP and networking
+urllib3 # Required by requests
+certifi # Required by requests
+charset-normalizer # Required by requests
+idna # Required by requests
+
+# Development and testing dependencies
+pytest
+pytest-cov
+black # Code formatting
+isort # Import sorting
+flake8 # Linting
+mypy # Static type checking
+pylint # Additional linting
+types-requests # Type hints for requests
+
+# Logging and monitoring
+prometheus-client # For metrics
+structlog # Structured logging
+slack-sdk # For Slack notifications
+
+# Security
+cryptography # For additional security features
+
+# Enhanced security
+pyaes # For data encryption
+pbkdf2 # For key derivation
+
+# File handling
+pathlib2post1
+
+# Service monitoring
+watchdog
+psutil
+
+# Permission handling
+sudo # For controlled privilege escalation
+
+# QR Code generation
+qrcode[pil] # For generating data QR codes
+Pillow # Required by qrcode for image handling

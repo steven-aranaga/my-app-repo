@@ -1,0 +1,11 @@
+.env*
+!.env.example
+.env.aider
+.git/
+venv/
+.log
+.csv
+.txt
+.tsv
+.tsv.gz
+codebase.txt
