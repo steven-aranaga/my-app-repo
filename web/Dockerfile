@@ -1,44 +1,53 @@
-FROM rust:slim-bookworm AS builder
+FROM rust:1.70-slim as builder
 
-WORKDIR /usr/web
+# Set environment variables
+ENV CARGO_TERM_COLOR=always
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
-    pkg-config \
-    libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Set up working directory
+WORKDIR /app
 
-# Copy source code
-COPY web/Cargo.toml web/Cargo.lock ./
-COPY web/src ./src
-COPY web/content ./content
-COPY web/static ./static
-COPY web/templates ./templates
+# Copy Cargo.toml and Cargo.lock
+COPY Cargo.toml Cargo.lock* ./
+
+# Create dummy source file to build dependencies
+RUN mkdir -p src && echo 'fn main() { println!("Dummy"); }' > src/main.rs
+
+# Build dependencies
+RUN cargo build --release
+
+# Remove dummy source files
+RUN rm -rf src
+
+# Copy the actual source code
+COPY . .
+
 # Build the application
 RUN cargo build --release
 
-# Runtime stage
-FROM debian:bookworm-slim
+# Create runtime image
+FROM debian:bullseye-slim
 
-WORKDIR /usr/web
-
-# Install runtime dependencies
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy built binary and assets
-COPY --from=builder /usr/web/target/releasemy-app-repo-web .
-COPY --from=builder /usr/web/content ./content
-COPY --from=builder /usr/web/static ./static
-COPY --from=builder /usr/web/templates ./templates
+# Set up working directory
+WORKDIR /app
 
-# Create non-root user
-RUN useradd -m -u 1000 web
-RUN chown -R web:web /usr/web
+# Copy the binary from the builder
+COPY --from=builder /app/target/release/web /app/web
 
-USER web
+# Copy static files and templates
+COPY static /app/static
+COPY templates /app/templates
 
-EXPOSE 8080
+# Create necessary directories
+RUN mkdir -p /app/logs
 
-CMD [".my-app-repo-web"] 
+# Expose port
+EXPOSE 3000
+
+# Run the application
+CMD ["/app/web"]
+

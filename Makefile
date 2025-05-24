@@ -1,20 +1,52 @@
-up:
-	docker compose -f docker-compose.dev.yml up -d
+.PHONY: build-dev run-dev stop-dev build-prod run-prod stop-prod clean
 
-up-prod:
-	docker compose -f docker-compose.prod.yml up -d
+# Development environment
+build-dev:
+	docker build -t my-app-dev -f Dockerfile.dev .
 
-down:
-	docker compose -f docker-compose.dev.yml down
+run-dev:
+	docker run -d --name my-app-dev -p 80:80 -v $(PWD):/app my-app-dev
 
-down-prod:
-	docker compose -f docker-compose.prod.yml down
+stop-dev:
+	docker stop my-app-dev || true
+	docker rm my-app-dev || true
 
-build:
-	docker compose -f docker-compose.dev.yml build
-
+# Production environment
 build-prod:
-	docker compose -f docker-compose.prod.yml build
+	docker-compose build
 
-prune:
-	docker system prune --volumes -a -f
+run-prod:
+	docker-compose up -d
+
+stop-prod:
+	docker-compose down
+
+# Clean up
+clean:
+	docker-compose down -v
+	docker rmi my-app-dev || true
+	docker rmi my-app-web || true
+	docker rmi my-app-api || true
+	docker rmi my-app-backend || true
+	rm -rf data/app.db logs/*.log
+
+# Utility commands
+logs:
+	docker-compose logs -f
+
+shell-backend:
+	docker-compose exec backend /bin/bash
+
+shell-api:
+	docker-compose exec api /bin/bash
+
+shell-web:
+	docker-compose exec web /bin/bash
+
+# Database commands
+db-init:
+	docker-compose exec backend python -c "from backend.app.db import init_db; init_db()"
+
+db-shell:
+	docker-compose exec backend sqlite3 /app/data/app.db
+
