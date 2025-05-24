@@ -19,8 +19,11 @@ log() {
 # Print starting directory for debugging
 echo "Starting directory: $(pwd)"
 
-# Change into the repository directory
-cd /workspacemy-app-repo
+# Change into the repository directory if needed
+if [[ "$(pwd)" != *"my-app-repo" ]]; then
+    cd /workspace
+    echo "Changed to workspace directory: $(pwd)"
+fi
 
 # Print current directory after cd
 echo "Current directory: $(pwd)"
@@ -38,7 +41,9 @@ sudo apt-get install -y \
     libssl-dev \
     nginx \
     git \
-    logrotate
+    logrotate \
+    sqlite3 \
+    supervisor
 
 # Install Rust if not present
 if ! command -v rustc &> /dev/null; then
@@ -88,7 +93,7 @@ python3 -m pip install --upgrade pip || {
 
 # Install Python dependencies
 log "Installing Python dependencies..." "$YELLOW"
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 
 # Install Rust dependencies
 log "Installing Rust dependencies..." "$YELLOW"
@@ -108,11 +113,15 @@ mkdir -p logs/nginx
 mkdir -p logs/api
 mkdir -p logs/backend
 mkdir -p logs/app
+mkdir -p static/css
+mkdir -p static/js
+mkdir -p static/html
 
 # Set permissions
 log "Setting permissions..." "$YELLOW"
 chmod 755 data/api data/backend data/frontend
 chmod 755 logs logs/nginx logs/api logs/backend logs/app
+chmod 755 static static/css static/js static/html
 
 # Set up environment files
 log "Setting up environment files..." "$YELLOW"
@@ -130,26 +139,36 @@ if [ ! -f ".env" ]; then
     fi
 fi
 
-# Configure Nginx
-log "Configuring Nginx..." "$YELLOW"
-if [ -d "/etc/nginx/sites-available" ]; then
-    sudo cp config/nginxmy-app-repo.conf /etc/nginx/sites-availablemy-app-repo
-    sudo ln -sf /etc/nginx/sites-availablemy-app-repo /etc/nginx/sites-enabled/
-    sudo nginx -t && sudo systemctl restart nginx
-fi
-
-# Create log files
-log "Creating log files..." "$YELLOW"
+# Create empty log files to ensure proper permissions
+log "Creating log files with proper permissions..." "$YELLOW"
 touch logs/nginx/access.log logs/nginx/error.log
 touch logs/api/api.log logs/backend/backend.log logs/app/app.log
 chmod 666 logs/nginx/*.log
 chmod 644 logs/api/*.log logs/backend/*.log logs/app/*.log
 
-# Set up log rotation
-log "Setting up log rotation..." "$YELLOW"
-if [ -d "/etc/logrotate.d" ]; then
-    sudo cp config/logrotatemy-app-repo /etc/logrotate.d/
+# Initialize database if it doesn't exist
+if [ ! -f "data/backend/app.db" ]; then
+    log "Initializing database..." "$YELLOW"
+    PYTHONPATH=$(pwd) python3 -c "from backend.app.db import init_db; init_db()"
+    log "Database initialized" "$GREEN"
+fi
+
+# Create static files if they don't exist
+if [ ! -f "static/css/styles.css" ]; then
+    log "Creating static CSS file..." "$YELLOW"
+    echo "body { font-family: Arial, sans-serif; margin: 0; padding: 0; }" > static/css/styles.css
+fi
+
+if [ ! -f "static/js/main.js" ]; then
+    log "Creating static JS file..." "$YELLOW"
+    echo "console.log('My App loaded');" > static/js/main.js
+fi
+
+if [ ! -f "static/html/404.html" ]; then
+    log "Creating static HTML files..." "$YELLOW"
+    echo "<h1>404 - Page Not Found</h1>" > static/html/404.html
+    echo "<h1>500 - Server Error</h1>" > static/html/50x.html
 fi
 
 log "Setup completed successfully!" "$GREEN"
-log "To start the development server, run: ./scripts/start-dev.sh" "$GREEN"
+log "To start the development server, run: ./.openhands/start.sh" "$GREEN"
