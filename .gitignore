@@ -1,21 +1,72 @@
+# Environment variables
 .env
-.env.aider
-.env.secret
+.env.*
 !.env.example
-.aider*
-.aider*/
-venv/
+
+# Python
 __pycache__/
-**/__pycache__/**
-*.log
-*.zip
-.vscode/
-.mypy_cache/
-.ruff_cache/
-codebase.txt
-data/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+.venv/
+.pytest_cache/
+
+# Rust
+target/
+**/*.rs.bk
+Cargo.lock
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
 logs/
-.sqlx/
-.python-version
-.plandex-v2/
-web/target/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Docker
+.docker/
+
+# Data
+data/
+
+# Temporary files
+tmp/
+temp/

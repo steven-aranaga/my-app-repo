@@ -44,6 +44,29 @@ The development environment runs in a single Docker container with all services:
 
 4. Access the application at http://localhost
 
+### Development Workflow
+
+1. Make changes to the code in your local environment
+2. The changes will be reflected in the running container (for Python code)
+3. For Rust code changes, you'll need to rebuild:
+   ```bash
+   make stop-dev
+   make build-dev
+   make run-dev
+   ```
+
+4. To view logs:
+   ```bash
+   make logs
+   ```
+
+5. To access a shell in the container:
+   ```bash
+   make shell-backend  # For Python backend
+   make shell-api      # For Rust API
+   make shell-web      # For Rust frontend
+   ```
+
 ## Production Environment
 
 The production environment uses Docker Compose to run services in separate containers:
@@ -70,6 +93,43 @@ The production environment uses Docker Compose to run services in separate conta
    make stop-prod
    ```
 
+4. To initialize the database:
+   ```bash
+   make db-init
+   ```
+
+5. To access the database shell:
+   ```bash
+   make db-shell
+   ```
+
+## Configuration
+
+The application is configured using environment variables. Copy the `.env.example` file to `.env` and modify as needed:
+
+```
+# Environment
+ENVIRONMENT=development
+
+# API settings
+API_TOKEN=your_api_token
+JWT_SECRET=your_jwt_secret
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# Web settings
+WEB_HOST=0.0.0.0
+WEB_PORT=3000
+
+# API settings
+API_HOST=0.0.0.0
+API_PORT=8000
+
+# Backend settings
+DATABASE_URL=sqlite:///app/data/app.db
+LOG_LEVEL=info
+LOG_FILE=/app/logs/backend.log
+```
+
 ## Project Structure
 
 ```
@@ -95,6 +155,7 @@ my-app/
 ├── nginx/                # Nginx configuration
 ├── static/               # Static files
 ├── supervisor/           # Supervisor configuration
+├── scripts/              # Utility scripts
 ├── Dockerfile.dev        # Development container definition
 ├── docker-compose.yml    # Production container orchestration
 ├── Makefile              # Convenience commands
@@ -108,10 +169,38 @@ The application uses SQLite for data storage. The database file is stored in the
 ### Database Schema
 
 - **users**: User accounts
+  - id: Primary key
+  - username: Unique username
+  - email: Unique email address
+  - password_hash: Hashed password
+  - is_active: Whether the user is active
+  - is_admin: Whether the user is an admin
+  - created_at: Creation timestamp
+  - updated_at: Last update timestamp
+
 - **items**: User items
+  - id: Primary key
+  - name: Item name
+  - description: Item description
+  - user_id: Foreign key to users table
+  - created_at: Creation timestamp
+  - updated_at: Last update timestamp
+
 - **api_tokens**: API authentication tokens
+  - id: Primary key
+  - token: Unique token
+  - user_id: Foreign key to users table
+  - name: Token name
+  - expires_at: Expiration timestamp
+  - created_at: Creation timestamp
 
 ## API Endpoints
+
+### Authentication
+
+All API endpoints require authentication using one of the following methods:
+- API token in the `Authorization` header: `Authorization: Bearer <token>`
+- JWT token in the `Authorization` header: `Authorization: Bearer <token>`
 
 ### Users
 
@@ -136,7 +225,15 @@ The application uses SQLite for data storage. The database file is stored in the
 - `/items`: Item management
 - `/about`: About page
 
+## Development Scripts
+
+The `scripts` directory contains utility scripts:
+
+- `setup-dev.sh`: Set up the development environment
+  ```bash
+  ./scripts/setup-dev.sh
+  ```
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-

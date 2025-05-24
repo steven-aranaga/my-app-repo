@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # Development container with all services
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "8000:8000"  # API port (for direct access)
+      - "3000:3000"  # Web port (for direct access)
+    volumes:
+      - .:/app
+      - app-data:/app/data
+      - app-logs:/app/logs
+    environment:
+      - ENVIRONMENT=development
+      - WEB_HOST=0.0.0.0
+      - WEB_PORT=3000
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - DATABASE_URL=sqlite:///app/data/app.db
+      - API_TOKEN=${API_TOKEN:-dev_api_token}
+      - JWT_SECRET=${JWT_SECRET:-dev_jwt_secret}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      - LOG_LEVEL=debug
+      - LOG_FILE=/app/logs/app.log
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  app-data:
+  app-logs:
+
